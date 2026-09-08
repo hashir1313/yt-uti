@@ -115,6 +115,25 @@ function processOtherUrl(rawUrl) {
   }
 }
 
+function getLinkedInLinks() {
+  const links = document.querySelectorAll('a[href]');
+  const seen = new Set();
+  const results = [];
+
+  links.forEach(link => {
+    try {
+      const url = new URL(link.href);
+      const host = url.hostname.toLowerCase();
+      if (host.includes('linkedin.com') && !seen.has(url.href)) {
+        seen.add(url.href);
+        results.push(url.href);
+      }
+    } catch (e) {}
+  });
+
+  return results;
+}
+
 function getAllLinks() {
   const links = document.querySelectorAll('a[href]');
   const videosMap = new Map();
@@ -293,50 +312,81 @@ function createModal(linksGroup) {
   input.select();
 }
 
-function createButton() {
-  const existing = document.getElementById('yt-open-all-btn');
+function createButtons() {
+  const existing = document.getElementById('yt-btn-group');
   if (existing) return;
 
-  const wrapper = document.createElement('div');
-  wrapper.id = 'yt-open-all-btn';
-  wrapper.style.cssText = 'position:fixed !important;bottom:30px !important;right:30px !important;z-index:2147483647 !important;pointer-events:auto !important;';
+  const group = document.createElement('div');
+  group.id = 'yt-btn-group';
+  group.style.cssText = 'position:fixed !important;bottom:30px !important;right:30px !important;z-index:2147483647 !important;display:flex;flex-direction:column;gap:10px;pointer-events:auto !important;';
 
-  const btn = document.createElement('button');
-  btn.textContent = 'Open Links';
-  btn.style.cssText = 'padding:14px 24px;background-color:#ff0000;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);pointer-events:auto;';
+  function makeBtn(text, bgColor, onClick) {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    btn.style.cssText = `padding:12px 20px;background-color:${bgColor};color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);pointer-events:auto;white-space:nowrap;`;
 
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    e.stopPropagation();
-    const linksGroup = getAllLinks();
-    const totalFound = (linksGroup.videos?.length || 0) + (linksGroup.channels?.length || 0) + (linksGroup.playlists?.length || 0) + (linksGroup.others?.length || 0);
-    if (totalFound === 0) {
-      btn.textContent = 'No links found';
-      setTimeout(() => { btn.textContent = 'Open Links'; }, 2000);
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+      onClick(btn);
+    });
+
+    btn.addEventListener('mousedown', (e) => {
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+    });
+
+    return btn;
+  }
+
+  const ytBtn = makeBtn('Open YouTube Links', '#ff0000', (btn) => {
+    const links = getAllLinks();
+    const all = [...links.videos, ...links.channels, ...links.playlists];
+    if (all.length === 0) {
+      btn.textContent = 'No YouTube links';
+      setTimeout(() => { btn.textContent = 'Open YouTube Links'; }, 2000);
       return;
     }
-    createModal(linksGroup);
+    all.forEach(url => window.open(url, '_blank'));
   });
 
-  btn.addEventListener('mousedown', (e) => {
-    e.stopImmediatePropagation();
-    e.stopPropagation();
+  const liBtn = makeBtn('Open LinkedIn Links', '#0077b5', (btn) => {
+    const all = getLinkedInLinks();
+    if (all.length === 0) {
+      btn.textContent = 'No LinkedIn links';
+      setTimeout(() => { btn.textContent = 'Open LinkedIn Links'; }, 2000);
+      return;
+    }
+    all.forEach(url => window.open(url, '_blank'));
   });
 
-  wrapper.appendChild(btn);
-  document.body.appendChild(wrapper);
+  const otherBtn = makeBtn('Open Other Links', '#555', (btn) => {
+    const links = getAllLinks();
+    const all = links.others;
+    if (all.length === 0) {
+      btn.textContent = 'No other links';
+      setTimeout(() => { btn.textContent = 'Open Other Links'; }, 2000);
+      return;
+    }
+    all.forEach(url => window.open(url, '_blank'));
+  });
+
+  group.appendChild(ytBtn);
+  group.appendChild(liBtn);
+  group.appendChild(otherBtn);
+  document.body.appendChild(group);
 }
 
 function removeButton() {
-  const existing = document.getElementById('yt-open-all-btn');
+  const existing = document.getElementById('yt-btn-group');
   if (existing) existing.remove();
 }
 
 function initResearchMode() {
   chrome.storage.local.get({ researchMode: false }, (result) => {
     if (result.researchMode) {
-      createButton();
+      createButtons();
     }
   });
 }
@@ -344,7 +394,7 @@ function initResearchMode() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.researchMode) {
     if (changes.researchMode.newValue) {
-      createButton();
+      createButtons();
     } else {
       removeButton();
       removeModal();
