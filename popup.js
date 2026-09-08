@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusContainer = document.getElementById('status-container');
   const statusIcon = document.getElementById('status-icon');
   const statusMessage = document.getElementById('status-message');
+  const researchToggle = document.getElementById('research-mode-toggle');
+  const popupBody = document.querySelector('.popup-body');
 
   let cachedVideoTabs = [];
   let isTabsExtracted = false;
@@ -21,6 +23,30 @@ document.addEventListener('DOMContentLoaded', () => {
   function hideStatus() {
     statusContainer.className = 'status-container hidden';
   }
+
+  function updateUIForResearchMode(enabled) {
+    if (enabled) {
+      popupBody.classList.remove('disabled');
+      btnOpenChannels.disabled = !isTabsExtracted || cachedVideoTabs.length === 0;
+      btnOpenSearchLinks.disabled = false;
+    } else {
+      popupBody.classList.add('disabled');
+      btnOpenChannels.disabled = true;
+      btnOpenSearchLinks.disabled = true;
+      hideStatus();
+    }
+  }
+
+  researchToggle.addEventListener('change', () => {
+    const enabled = researchToggle.checked;
+    chrome.storage.local.set({ researchMode: enabled });
+    updateUIForResearchMode(enabled);
+  });
+
+  chrome.storage.local.get({ researchMode: false }, (result) => {
+    researchToggle.checked = result.researchMode;
+    updateUIForResearchMode(result.researchMode);
+  });
 
   function isYouTubeVideoUrl(rawUrl) {
     if (!rawUrl) return false;
@@ -72,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnOpenChannels.disabled = true;
       } else {
         tabCountBadge.style.color = '#3ea6ff';
-        btnOpenChannels.disabled = false;
+        if (researchToggle.checked) {
+          btnOpenChannels.disabled = false;
+        }
       }
     } catch (e) {
       console.error('Error initializing tabs:', e);

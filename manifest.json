@@ -12,7 +12,8 @@
   "permissions": [
     "activeTab",
     "tabs",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "*://*.youtube.com/*",
@@ -32,7 +33,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.google.com/*", "*://google.com/*"],
+      "matches": ["*://*/*"],
       "js": ["content.js"]
     }
   ]
