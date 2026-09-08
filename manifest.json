@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Utilities & Link Opener",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Batch open YouTube videos from Google search and extract/open channel pages from open video tabs.",
   "icons": {
     "16": "public/icon16.png",
