@@ -48,6 +48,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUIForResearchMode(result.researchMode);
   });
 
+  const closeTabsToggle = document.getElementById('close-tabs-toggle');
+
+  closeTabsToggle.addEventListener('change', () => {
+    chrome.storage.local.set({ closeTabsAfterExtraction: closeTabsToggle.checked });
+  });
+
+  chrome.storage.local.get({ closeTabsAfterExtraction: false }, (result) => {
+    closeTabsToggle.checked = result.closeTabsAfterExtraction;
+  });
+
   function isYouTubeVideoUrl(rawUrl) {
     if (!rawUrl) return false;
     try {
@@ -213,6 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
             chrome.tabs.create({ url: channelUrl, active: false })
           )
         );
+
+        if (closeTabsToggle.checked) {
+          await Promise.all(
+            cachedVideoTabs.map(tab =>
+              chrome.tabs.remove(tab.id).catch(() => {})
+            )
+          );
+        }
 
         showStatus(
           'success',
