@@ -336,10 +336,7 @@ function removeButton() {
 function initResearchMode() {
   chrome.storage.local.get({ researchMode: false }, (result) => {
     if (result.researchMode) {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.has('start') || params.get('start') === '0') {
-        createButton();
-      }
+      createButton();
     }
   });
 }
@@ -347,10 +344,7 @@ function initResearchMode() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.researchMode) {
     if (changes.researchMode.newValue) {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.has('start') || params.get('start') === '0') {
-        createButton();
-      }
+      createButton();
     } else {
       removeButton();
       removeModal();
