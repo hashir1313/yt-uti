@@ -58,6 +58,16 @@ document.addEventListener('DOMContentLoaded', () => {
     closeTabsToggle.checked = result.closeTabsAfterExtraction;
   });
 
+  const yourChannelInput = document.getElementById('your-channel-input');
+
+  yourChannelInput.addEventListener('input', () => {
+    chrome.storage.local.set({ yourChannel: yourChannelInput.value.trim() });
+  });
+
+  chrome.storage.local.get({ yourChannel: '' }, (result) => {
+    yourChannelInput.value = result.yourChannel;
+  });
+
   function isYouTubeVideoUrl(rawUrl) {
     if (!rawUrl) return false;
     try {
@@ -213,7 +223,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      const uniqueChannelUrls = Array.from(channelUrlsMap);
+      const uniqueChannelUrls = Array.from(channelUrlsMap).filter(url => {
+        const exclude = yourChannelInput.value.trim().toLowerCase();
+        if (!exclude) return true;
+        return !url.toLowerCase().includes(exclude);
+      });
 
       if (uniqueChannelUrls.length === 0) {
         showStatus('error', `Found ${cachedVideoTabs.length} video tab(s), but couldn't extract channel links. Make sure video pages are fully loaded.`, '❌');
